@@ -1,0 +1,28 @@
+name: Test Scenario
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+      - name: setup config
+        run: mv tests/config/configExample.ts tests/config/config.ts
+      - name: Setup test Env
+        run: |
+          yarn install
+          yarn build
+          docker-compose up -d
+      - name: run
+        # In GitHub Actions, if pseudo-tty is assigned in case of docker compose run,
+        # container execution will continue and step will not be completed, so disable it with -T option.
+        run: docker compose run -T k6 run --compatibility-mode=base - < ./dist/httpGet.js
